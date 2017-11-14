@@ -1,0 +1,44 @@
+#!/home/wilsonge/miniconda2/bin/python
+
+import argparse
+from scripts import MASHtoREF, actions, LyveSET
+from os import getcwd
+
+parser = argparse.ArgumentParser(description='DCLS River', usage='river <command> <options>')
+subparsers = parser.add_subparsers(title='Commands', help='', metavar='')
+
+#-----------------------------mash2ref--------------------------
+subparser_mash2ref = subparsers.add_parser('mash2ref',
+                                           help='Compare directory of MASH sketches to the MASH NCBI RefSeq DB',
+                                           usage='river mash2ref <directory> <outprefix> [options]',
+                                           description='Find most suitable reference sequence(s) for a set of isolates')
+
+subparser_mash2ref.add_argument('directory', action=actions.DirectoryExists, help='directory of mash sketches')
+subparser_mash2ref.add_argument('output', help='output prefix')
+subparser_mash2ref.set_defaults(func=MASHtoREF.run)
+
+#--------------------------lyveset-----------------------------
+subparser_lyveset = subparsers.add_parser('lyveset',
+                                          help='Run full lyveset pipeline',
+                                          usage='river lyveset <project_name> <directory> <reference> [options]',
+                                          description='Creates directory structure and runs lyveset snp profiling and phylogeny')
+subparser_lyveset.add_argument('project_name', help='Unique name for project run')
+group = subparser_lyveset.add_mutually_exclusive_group(required=True)
+group.add_argument('-d', dest='directory', action=actions.DirectoryExists, help='Directory location of reads')
+group.add_argument('-b', dest='BS_project', action=actions.BaseSpaceDirectory, help='BaseSpace project id containing reads')
+subparser_lyveset.add_argument('-r', dest='reference', action=actions.FileExists, help='Path to reference sequence')
+subparser_lyveset.add_argument('-o', action=actions.DirectoryExists, dest='output', default='./', help='Directory to build lyveset. default = current directory') 
+subparser_lyveset.set_defaults(func=LyveSET.run)
+
+#Parse command
+#pass arguments to the function defined by the specified subcommand
+
+try:
+    arguments = parser.parse_args()
+    arguments.func(arguments)
+except ValueError as exc:
+    print 'ERROR::', exc.message
+    exit(1)
+
+
+
