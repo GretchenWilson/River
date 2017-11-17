@@ -1,7 +1,16 @@
 #!/home/wilsonge/miniconda2/bin/python
-import actions, argparse, subprocess
+import actions, argparse, subprocess, re
 from glob import glob
 from os import makedirs, mkdir, path, getcwd, chdir, symlink, listdir, walk
+
+def rename(filename):
+    print filename
+    new_name = path.basename(filename)
+    if re.search('basespace', filename, re.IGNORECASE):
+        new_name = new_name.split('_')[0]
+        new_name = new_name + '_1.fastq.gz' if "_R1_" in filename else new_name + '_2.fastq.gz'
+    print new_name
+    return new_name
 
 def run(args):
 
@@ -9,7 +18,7 @@ def run(args):
     reference = path.abspath(args.reference)
     directory = args.directory if args.directory else args.BS_project
     output = path.abspath(args.output)
-    
+    outgroups = args.outgroups if args.outgroups else None
     project_dir = path.join(output, project)
     interleaved = path.join(output, project, 'interleaved_files')
     reads = path.join(project_dir, 'raw_reads')
@@ -19,6 +28,7 @@ def run(args):
     print "Reference:", reference
     print "Reads Directory:", directory
     print "Output Directory:", output
+    
 
     try:    
         makedirs(interleaved)
@@ -30,10 +40,19 @@ def run(args):
 
         
     #link reads
+    outgroup_iso = []
     for dir,_,_ in walk(directory):
         for read_file in glob(path.join(dir, '*.fastq*')):
-            symlink(read_file, path.join(reads, path.basename(read_file)))
-        
+            symlink(read_file, path.join(reads, rename(read_file)))
+    if outgroups:
+        for dir,_,_ in walk(outgroups):
+            for read_file in glob(path.join(dir, '*.fastq*')):
+                new_filename = rename(read_file)
+                print path.join(reads, new_filename)
+                outgroup_iso.append(new_filename[0:(len(new_filename) - 11)])      
+                symlink(read_file, path.join(reads, new_filename))
+    print " ".join(outgroup_iso)
+    exit()
     #interleave 1 and 2 read files and place into interleaved_files directory
     chdir(reads)
     subprocess.call('shuffleSplitReads.pl *.fastq* --numcpus 4 -o ' + interleaved, shell=True )
