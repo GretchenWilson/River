@@ -27,6 +27,7 @@ group = subparser_lyveset.add_mutually_exclusive_group(required=True)
 group.add_argument('-d', dest='directory', action=actions.DirectoryExists, help='Directory location of reads')
 group.add_argument('-b', dest='BS_project', action=actions.BaseSpaceDirectory, help='BaseSpace project id containing reads')
 subparser_lyveset.add_argument('-r', dest='reference', action=actions.FileExists, help='Path to reference sequence')
+subparser_lyveset.add_argument('-root_outgroup', action=actions.DirectoryExists, dest='outgroups', help='Path to outgroup directory')
 subparser_lyveset.add_argument('-o', action=actions.DirectoryExists, dest='output', default='./', help='Directory to build lyveset. default = current directory') 
 subparser_lyveset.set_defaults(func=LyveSET.run)
 
@@ -39,6 +40,7 @@ try:
 except ValueError as exc:
     print 'ERROR::', exc.message
     exit(1)
+
 
 
 
